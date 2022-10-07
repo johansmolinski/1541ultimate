@@ -14,6 +14,7 @@ Here are some ideas for the HTTP API. Losely based on Google Cloud API design gu
   * `DELETE`: deletes data
 * All endpoints support the optional query parameter `output=<text|json>`, defining the format of the HTTP body output. Default is text, useful for scripting in bash for instance. Json output is a full document on a single line.
 * New endpoints and parameters may be added to the same version of the API in the future as long they do not break compatibility for existing implementations. Breaking changes must be added to a new version of the API. A released non-beta version of the API must be supported at least during the full life cycle of the major firmware version.
+* For all endpoints, the default is to return `400 BAD REQUEST`. All other cases are explicitly stated in the Endpoints definitions.
 
 The URI for calling an endpoint of API version 1 is 
 
@@ -39,38 +40,87 @@ This endpoint is used for all file related actions. After the method name follow
 `DELETE files/<path>` (blocking): deletes the given file or directory. Possible outcomes:
 * if path is an existing file or directory, and is successfully deleted, return `200 OK`
 * if path is not an existing file or directory, return `404 NOT FOUND`
-* otherwise, return `400 BAD REQUEST`
 
 `POST files/<path>?type=<prg|d64|d81>` (blocking): adds the supplied payload to the given path of the given type. Overwrites existing file if applicable. Possible outcomes:
 * if path is a valid filename in an existing directory, and if the supplied data successfully is written to the path, return `200 OK`
 * if path is not a valid filename in an existing directory, return `404 NOT FOUND`
-* otherwise, return `400 BAD REQUEST`
 
 `PUT files/<path>:createDiskImage?[type=<d64|d81>]` (blocking): creates an empty disk image at the absolute path to a file. Optionally a file type can be given (default is d64). Possible outcomes:
 * if path is a valid non-existing file name and creation is successful, return `200 OK`
 * if path is an existing file, return `403 FORBIDDEN`
-* otherwise, return `400 BAD REQUEST`
 
 `PUT files/<path>:copy?destination=<destination>` (blocking): copy a file or directory. The destination query argument is required. Destination can be either a directory or a file. If a directory is given, try creating the copy with the same file name as the original. If a filename is given to a non-existing file, try create the copy with the given filename. If a filename is given to an existing file, try overwrite it. Possible outcomes:
 * if path is a valid readable file or directory and is successfully copied to the given destination, return `200 OK`
-* otherwise return `400 BAD REQUEST`
 
-`PUT files/<path>:runFile[?method=<dma|real>]` (non-blocking): run the given file using supplied method (default dma). If method=dma, copy the file to C64 RAM and run. If method=real, use kernal to load it. This is a PUT method instead of GET, because we cannot guarantee an unchanged state. Possible outcomes:
+`PUT files/<path>:loadFile[?method=<dma|real>]` (blocking): load the given file using supplied method (default dma). If method=dma, copy the file to C64 RAM and run. If method=real, use kernal to load it. This is a PUT method instead of GET, because it will modify memory. Possible outcomes:
+* if file exists and is successfully, return `200 OK`
+* if file does not exist, return `404 NOT FOUND`
+See also `PUT machineFeatures/prg`
+
+`PUT files/<path>:runFile[?method=<dma|real>]` (non-blocking): run the given file using supplied method (default dma). If method=dma, copy the file to C64 RAM and run. If method=real, use kernal to load it.
 * if file exists and is runnable, return `200 OK` and start running
 * if file does not exist, return `404 NOT FOUND`
-* otherwise, return `400 BAD REQUEST`
 
 `PUT files/<path>:runDisk[?method=<dma|real>]` (partly blocking): mount the given disk image (blocking) and run the first runnable file found (non-blocking) using the suppled method (default dma). If method=dma, copy the first file to C64 RAM and run. If method=real, use kernal to load \*. Possible outcomes:
 * if file exists and is a valid disk image and is successfully mounted, return `200 OK` and start running
 * if file does not exist, return `404 NOT FOUND`
-* otherwise, return `400 BAD REQUEST`
 
 `PUT files/<path>:mountDisk[?method=<dma|real>` (blocking): mount the given disk image. Possible outcomes:
 * if file exists and is a valid disk image and is successfully mounted, return `200 OK`
 * if file does not exist, return `404 NOT FOUND`
-* otherwise, return `400 BAD REQUEST`
 
 TODO: More endpoints
+
+### machineFeatures
+
+`GET machineFeatures/` (blocking): retrieve a list of available machine features: basic, chars, prg, ram, reu, reset, cart, bootDisk, reu, powerOff.
+* always return `200 OK`
+
+`GET machineFeatures/basic` (blocking): retrieve the path to the currently loaded basic rom.
+* always return `200 OK`
+
+`PUT machineFeature/basic?file=<path>` (blocking): load a basic rom.
+* if file in path is successfully loaded, return `200 OK`
+
+`GET machineFeatures/kernal` (blocking): retrieve the path to the currently loaded kernal rom.
+* always return `200 OK`
+
+`PUT machineFeature/kernal?file=<path>` (blocking): load a kernal rom.
+* if file in path is successfully loaded, return `200 OK`
+
+`GET machineFeatures/chars` (blocking): retrieve the path to the currently loaded chars rom.
+* always return `200 OK`
+
+`PUT machineFeature/chars?file=<path>` (blocking): load a chars rom.
+* if file in path is successfully loaded, return `200 OK`
+
+`GET machineFeature/prg[?startAddress=<>&length=<>]` (blocking): dump the file in memory. 
+* if file in path is successfully loaded, return `200 OK` with a body containing the memory dump
+
+`PUT machineFeature/prg?file=<path>` (blocking): load a file to memory.
+* if file in path is successfully loaded, return `200 OK`
+
+`POST machineFeature/prg?startAddress=<>` (blocking): upload supplied payload to memory at given start address.
+* if data is successfully uploaded and stored in memory, return `200 OK`
+* if the memory range from start address to length of payload is out of writable memory range, or covers unwritable memory, return `406 NOT ACCEPTABLE`
+
+`PUT machineFeature/prg:save?file=<path>[&startAddress=<>&length=<>]` (blocking): saves the prg in memory to a file
+* if path is a valid filename in an existing directory, and if the supplied data successfully is written to the path, return `200 OK`
+
+`GET machineFeatures/reset` (non-blocking): reset the C64.
+* always return `200 OK` then immediately reset the C64
+
+`GET machineFeatures/powerOff` (non-blocking): power off the U64.
+* always return `200 OK` then immediately power off the U64. 
+
+TODO:
+
+LoadREU
+SaveREU
+RunCart
+BootDisk
+REUOn/Off/Size
+
 
 ### configurationParameters
 
