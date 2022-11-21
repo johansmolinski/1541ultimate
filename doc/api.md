@@ -32,9 +32,15 @@ Here we call the files endpoint with the `PUT` http method, specifying the absol
 
 This endpoint is used for all file related actions. After the method name follows an absolute path to a file or directory. After that, an action may follow.
 
-`GET files/<path>` (blocking): retrieves information about the given path. Possible outcomes:
-* if path is a directory or a container with browsable content (like a D64 disk image), retrieve a list of files and return `200 OK`
-* if path is a single file, retrieve information about that file and return `200 OK`
+`GET files/<path>` (blocking): download a file.
+* if path is a directory, retrieve a list of files and return `200 OK`
+* if path is a single file, download the file and return `200 OK`
+* if path is non-existing, return `404 NOT FOUND`
+
+`GET files/<path>:info` (blocking): get metadata of a file.
+* if path is a directory, retrieve a list of files and return `200 OK`
+* if path is a single file with supported container type (like a D64 for instance), retrieve the list of content and return `200 OK`
+* if path is a single file, retrieve metadata and return `200 OK`
 * if path is non-existing, return `404 NOT FOUND`
 
 `DELETE files/<path>` (blocking): deletes the given file or directory. Possible outcomes:
@@ -49,8 +55,16 @@ This endpoint is used for all file related actions. After the method name follow
 * if path is a valid non-existing file name and creation is successful, return `200 OK`
 * if path is an existing file, return `403 FORBIDDEN`
 
+`PUT files/<path>:mkdir?name=<name>` (blocking): create a new directory with the given `name` at the given `path`. The `path` must point to an existing directory. `name` can contain `/` separators to browse down further into the directory structure, and if needed, directories will be recursively created.
+* if `path` is a valid directory and `name` is a valid directory name and creation is successful, return `200 OK`
+* if `path` is non-existing, return `404 NOT FOUND`
+* if `path` exists but is not a directory, return `403 FORBIDDEN`
+
 `PUT files/<path>:copy?destination=<destination>` (blocking): copy a file or directory. The destination query argument is required. Destination can be either a directory or a file. If a directory is given, try creating the copy with the same file name as the original. If a filename is given to a non-existing file, try create the copy with the given filename. If a filename is given to an existing file, try overwrite it. Possible outcomes:
 * if path is a valid readable file or directory and is successfully copied to the given destination, return `200 OK`
+
+`PUT files/<path>:move?destination=<destination>` (blocking): move a file or directory. The destination query argument is required. Destination can be either a directory or a file. If a directory is given, move to that directory with the same file name as the original. If a filename is given to a non-existing file, rename the file to the new name and move it to the given path. If a filename is given to an existing file, overwrite it. 
+* if path is a valid readable file or directory and is successfully moved to the given destination, return `200 OK`
 
 `PUT files/<path>:loadFile[?method=<dma|real>]` (blocking): load the given file using supplied method (default dma). If method=dma, copy the file to C64 RAM and run. If method=real, use kernal to load it. This is a PUT method instead of GET, because it will modify memory. Possible outcomes:
 * if file exists and is successfully, return `200 OK`
