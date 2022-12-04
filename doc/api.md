@@ -105,20 +105,20 @@ TODO: More endpoints
 `GET machineFeatures/chars` (blocking): retrieve the path to the currently loaded chars rom.
 * always return `200 OK`
 
-`PUT machineFeature/chars?file=<path>` (blocking): load a chars rom.
+`PUT machineFeatures/chars?file=<path>` (blocking): load a chars rom.
 * if file in path is successfully loaded, return `200 OK`
 
-`GET machineFeature/prg[?startAddress=<>&length=<>]` (blocking): dump the file in memory. 
+`GET machineFeatures/prg[?startAddress=<>&length=<>]` (blocking): dump the file in memory. 
 * if file in path is successfully loaded, return `200 OK` with a body containing the memory dump
 
-`PUT machineFeature/prg?file=<path>` (blocking): load a file to memory.
+`PUT machineFeatures/prg?file=<path>` (blocking): load a file to memory.
 * if file in path is successfully loaded, return `200 OK`
 
-`POST machineFeature/prg?startAddress=<>` (blocking): upload supplied payload to memory at given start address.
+`POST machineFeatures/prg?startAddress=<>` (blocking): upload supplied payload to memory at given start address.
 * if data is successfully uploaded and stored in memory, return `200 OK`
 * if the memory range from start address to length of payload is out of writable memory range, or covers unwritable memory, return `406 NOT ACCEPTABLE`
 
-`PUT machineFeature/prg:save?file=<path>[&startAddress=<>&length=<>]` (blocking): saves the prg in memory to a file
+`PUT machineFeatures/prg:save?file=<path>[&startAddress=<>&length=<>]` (blocking): saves the prg in memory to a file
 * if path is a valid filename in an existing directory, and if the supplied data successfully is written to the path, return `200 OK`
 
 `GET machineFeatures/reset` (non-blocking): reset the C64.
