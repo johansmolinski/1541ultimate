@@ -32,10 +32,47 @@ Here we call the files endpoint with the `PUT` http method, specifying the absol
 
 This endpoint is used for all file related actions. After the method name follows an absolute path to a file or directory. After that, an action may follow.
 
-`GET files/<path>` (blocking): download a file.
+`GET files/<path>[?entriesPerPage=<n>&page=<m>]` (blocking): download a file.
 * if path is a directory, retrieve a list of files and return `200 OK`
 * if path is a single file, download the file and return `200 OK`
 * if path is non-existing, return `404 NOT FOUND`
+* optional query params `entriesPerPage` and `page` enables pagination, `n` (default infinite) is maximum number of entries shown in one page and `m` (default: 0) is which page number to show.
+
+#### Example response payloads:
+```
+GET files ->
+
+{
+  "files": [
+    "/Usb0/",
+    "/Temp",
+    "/Flash"
+  ],
+  "errors": []
+}
+```
+```
+GET files/Usb0/ ->
+
+{
+  "files": [
+    "/Usb0/Demos/",
+    "/Usb0/Games/",
+    "/Usb0/SomeDisk.d64"
+  ],
+  "errors": []
+}
+```
+```
+GET files/SomeUnknownPath/ ->
+
+{
+  "files": [],
+  "errors": [
+    "File not found",
+  ]
+}
+```
 
 `GET files/<path>:info` (blocking): get metadata of a file.
 * if path is a directory, retrieve a list of files and return `200 OK`
